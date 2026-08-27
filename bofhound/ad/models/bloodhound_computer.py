@@ -1,3 +1,4 @@
+import base64
 import calendar
 from datetime import datetime
 from bloodhound.ad.utils import ADUtils, LDAP_SID
@@ -76,7 +77,15 @@ class BloodHoundComputer(BloodHoundObject):
             self.Properties['operatingsystem'] += f' {object.get("operatingsystemservicepack")}'
 
         if 'sidhistory' in object.keys():
-            self.Properties['sidhistory'] = [LDAP_SID(bsid).formatCanonical() for bsid in object.get('sidhistory', [])]
+            raw_sidhistory = object.get('sidhistory', [])
+            sid_values = raw_sidhistory if isinstance(raw_sidhistory, list) else [raw_sidhistory]
+            sid_history = []
+            for bsid in sid_values:
+                try:
+                    sid_history.append(LDAP_SID(base64.b64decode(bsid)).formatCanonical())
+                except Exception as e:
+                    logger.warning(f"Could not parse sidhistory value on {object.get('distinguishedname')}: {bsid!r} ({e})")
+            self.Properties['sidhistory'] = sid_history
         else:
             self.Properties['sidhistory'] = []
 

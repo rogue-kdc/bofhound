@@ -1,3 +1,4 @@
+import base64
 from bloodhound.ad.utils import ADUtils
 from bloodhound.ad.structures import LDAP_SID
 from bloodhound.enumeration.memberships import MembershipEnumerator
@@ -115,7 +116,15 @@ class BloodHoundUser(BloodHoundObject):
                 self.Properties["userpassword"] = ADUtils.ensure_string(object.get('userpassword'))
 
             if 'sidhistory' in object.keys():
-                self.Properties["sidhistory"] = [LDAP_SID(bsid).formatCanonical() for bsid in object.get('sIDHistory', [])]
+                raw_sidhistory = object.get('sidhistory', [])
+                sid_values = raw_sidhistory if isinstance(raw_sidhistory, list) else [raw_sidhistory]
+                sid_history = []
+                for bsid in sid_values:
+                    try:
+                        sid_history.append(LDAP_SID(base64.b64decode(bsid)).formatCanonical())
+                    except Exception as e:
+                        logger.warning(f"Could not parse sidhistory value on {object.get('distinguishedname')}: {bsid!r} ({e})")
+                self.Properties["sidhistory"] = sid_history
 
             if 'msds-allowedtodelegateto' in object.keys():
                 if len(object.get('msds-allowedtodelegateto', [])) > 0:
