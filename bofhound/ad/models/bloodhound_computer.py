@@ -165,7 +165,10 @@ class BloodHoundComputer(BloodHoundObject):
         data["PrimaryGroupSID"] = self.PrimaryGroupSid
         data["AllowedToDelegate"] = self.AllowedToDelegate
         data["AllowedToAct"] = []
-        data["HasSidHistory"] = self.Properties.get("sidhistory", [])
+        data["HasSidHistory"] = [
+            {"ObjectIdentifier": sid, "ObjectType": "Unknown"}
+            for sid in self.Properties.get("sidhistory", [])
+        ]
         data["DumpSMSAPassword"] = []
         data["LocalGroups"] = self.format_local_group_json()
         data["UserRights"] = []

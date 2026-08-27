@@ -124,7 +124,10 @@ class BloodHoundUser(BloodHoundObject):
                         sid_history.append(LDAP_SID(base64.b64decode(bsid)).formatCanonical())
                     except Exception as e:
                         logger.warning(f"Could not parse sidhistory value on {object.get('distinguishedname')}: {bsid!r} ({e})")
-                self.Properties["sidhistory"] = sid_history
+                self.HasSIDHistory = [
+                    {"ObjectIdentifier": sid, "ObjectType": "Unknown"}
+                    for sid in sid_history
+                ]
 
             if 'msds-allowedtodelegateto' in object.keys():
                 if len(object.get('msds-allowedtodelegateto', [])) > 0:
